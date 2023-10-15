@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -e
+
+USAGE="
+Obashidian - Obsidian Shell CLI (obsh)
+
+Query data from obsidian vault for analysis and automation direct from the command line.
+
+Usage:
+${0} <cmd> <args>
+"
+
+obshcli="${0}"
+
+# If is not in a vault, exit
+if [[ ! -d ".obsidian" ]]; then
+  echo "Error: This isn't an obsidian vault."
+  exit 1
+fi
+
+CMD=${1?"${USAGE}"}
+if [[ "${CMD}" == "tag" ]]; then
+  shift
+  TAG="#${1?"${USAGE}"}"
+
+  # Grep all files in current dir but ignoring hidden files/dirs
+  grep -r --exclude="*/\.*" "${TAG}" . | sed "s/${TAG}//" | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  exit 0
+fi
+
+# Reminder cmd
+# Check if a reminder is due
+# This is the reminder format #reminder:DD-MM-YYYY
+if [[ "${CMD}" == "reminder" ]]; then
+  shift
+  DATE=${1-"$(date +%d-%m-%Y)"}
+  echo "Reminders for ${DATE}"
+  grep -r --exclude="*/\.*" "#reminder:${DATE}" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  exit 0
+fi
+
+if [[ "${CMD}" == "reminders" ]]; then
+  shift
+  printf "All reminders \n\n"
+  grep -r --exclude="*/\.*" "#reminder" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  exit 0
+fi
+
+# Collect blocks of content from the vault
+# This is the block format: 
+#<!-- ini:<block_name> -->
+#   content
+#<!-- end:<block_name> -->
+if [[ "${CMD}" == "block" ]]; then
+  shift
+  BLOCK=${1?"${USAGE}"}
+
+  echo "-- ${BLOCK} --"
+  grep -rl "<!-- ini:$BLOCK -->" . | \
+    xargs -I{} awk "/<!-- ini:$BLOCK -->/{f=1;next} /<!-- end:$BLOCK -->/{f=0} f" {} 
+
+  exit 0
+fi
+
+if [[ "${CMD}" == "daily" ]]; then
+  shift
+  echo "
+---
+title: Daily
+date: $(date +%d-%m-%Y)
+---
+
+[[daily/$(date -v-1d +%d-%m-%Y)|yesterday]]
+[[daily/$(date -v+1d +%d-%m-%Y)|tomorrow]]
+
+## Todos
+
+$($obshcli tag todo)
+
+## Assumptions
+
+$($obshcli tag assumption)
+
+## Today reminders
+
+$($obshcli reminder)
+
+## Waiting
+
+$($obshcli tag waiting)
+
+$(cat "./daily/$(date -v -1d '+%d-%m-%Y').md" \
+	| rg --multiline --multiline-dotall '# Inbox.*(^#)' \
+  | sed 's/##? Inbox//')
+"
+  exit 0
+fi
+ 
+echo "ERROR: ${0} unknown command ${CMD}"
+echo "${USAGE}"
+exit 1
