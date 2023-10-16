@@ -19,29 +19,6 @@ if [[ ! -d ".obsidian" ]]; then
   exit 1
 fi
 
-## Helper function to calculate date in OSX and Linux
-#
-# Ex: date "yesterday" "+%d-%m-%Y"
-# for linux: date -d "yesterday" "+%d-%m-%Y"
-# for osx: date -v-1d "+%d-%m-%Y"
-#
-# @param {string} offset - offset to calculate date allowed values: yesterday, tomorrow, today
-# @return {string} date in format DD-MM-YYYY
-function _cdate() {
-  offset="${1:-"today"}"
-  if [[ "$(uname)" == "Darwin" ]]; then
-    if [[ "${offset}" == "yesterday" ]]; then
-      date -v-1d "+%d-%m-%Y"
-    elif [[ "${offset}" == "tomorrow" ]]; then
-      date -v+1d "+%d-%m-%Y"
-    else
-      date "+%d-%m-%Y"
-    fi
-  else
-    date -d ${offset} "+%d-%m-%Y"
-  fi
-}
-
 CMD=${1?"${USAGE}"}
 if [[ "${CMD}" == "tag" ]]; then
   shift
@@ -52,12 +29,33 @@ if [[ "${CMD}" == "tag" ]]; then
   exit 0
 fi
 
+# In OSX, check if gdate is installed
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ ! -x "$(command -v gdate)" ]]; then
+    echo "Missing: For OSX 'gdate' is required for calculating dates."
+    echo "Please install it with 'brew install coreutils'"
+    exit 1
+  fi
+fi
+
+## Helper function to calculate date in both OSX and Linux
+function _date() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    gdate "${@}"
+  else
+    date "${@}"
+  fi
+}
+
+yesterday="$(_date -d 'yesterday' +%d-%m-%Y)"
+tomorrow="$(_date -d 'tomorrow' +%d-%m-%Y)"
+
 # Reminder cmd
 # Check if a reminder is due
 # This is the reminder format #reminder:DD-MM-YYYY
 if [[ "${CMD}" == "reminder" ]]; then
   shift
-  DATE=${1-"$(_cdate)"}
+  DATE=${1-"$(date +%d-%m-%Y)"}
   echo "Reminders for ${DATE}"
   grep -r --exclude="*/\.*" "#reminder:${DATE}" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
   exit 0
@@ -86,16 +84,31 @@ if [[ "${CMD}" == "block" ]]; then
   exit 0
 fi
 
+# Collects a sections of content from the vault
+# A section starts with a ## title and goes till the next section
+# This is the section format:
+# ## SectionOne
+#  content
+# ## SectionTwo
+if [[ "${CMD}" == "section" ]]; then
+  shift
+  SECTION=${1?"${USAGE}"}
+  FILE=${2?"Requires a file to search for the section"}
+
+  awk "/^## ${SECTION}/{f=1;next} /^##/{f=0} f" ${FILE}
+  exit 0
+fi
+
 if [[ "${CMD}" == "daily" ]]; then
   shift
   echo "
 ---
 title: Daily
-date: $(_cdate)
+date: $(_date +%d-%m-%Y)
 ---
 
-[[daily/$(_cdate 'yesterday')|yesterday]]
-[[daily/$(_cdate 'tomorrow')|tomorrow]]
+[[daily/$yesterday|yesterday]]
+[[daily/$tomorrow|tomorrow]]
 
 ## Todos
 
@@ -113,9 +126,9 @@ $($obshcli reminder)
 
 $($obshcli tag waiting)
 
-$(cat "./daily/$(_cdate 'yesterday').md" \
-	| rg --multiline --multiline-dotall '# Inbox.*(^#)' \
-  | sed 's/##? Inbox//')
+## Inbox
+
+$(obsh section Inbox daily/$yesterday.md)
 "
   exit 0
 fi
