@@ -19,6 +19,29 @@ if [[ ! -d ".obsidian" ]]; then
   exit 1
 fi
 
+## Helper function to calculate date in OSX and Linux
+#
+# Ex: date "yesterday" "+%d-%m-%Y"
+# for linux: date -d "yesterday" "+%d-%m-%Y"
+# for osx: date -v-1d "+%d-%m-%Y"
+#
+# @param {string} offset - offset to calculate date allowed values: yesterday, tomorrow, today
+# @return {string} date in format DD-MM-YYYY
+function _cdate() {
+  offset="${1:-"today"}"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    if [[ "${offset}" == "yesterday" ]]; then
+      date -v-1d "+%d-%m-%Y"
+    elif [[ "${offset}" == "tomorrow" ]]; then
+      date -v+1d "+%d-%m-%Y"
+    else
+      date "+%d-%m-%Y"
+    fi
+  else
+    date -d ${offset} "+%d-%m-%Y"
+  fi
+}
+
 CMD=${1?"${USAGE}"}
 if [[ "${CMD}" == "tag" ]]; then
   shift
@@ -34,7 +57,7 @@ fi
 # This is the reminder format #reminder:DD-MM-YYYY
 if [[ "${CMD}" == "reminder" ]]; then
   shift
-  DATE=${1-"$(date +%d-%m-%Y)"}
+  DATE=${1-"$(_cdate)"}
   echo "Reminders for ${DATE}"
   grep -r --exclude="*/\.*" "#reminder:${DATE}" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
   exit 0
@@ -68,11 +91,11 @@ if [[ "${CMD}" == "daily" ]]; then
   echo "
 ---
 title: Daily
-date: $(date +%d-%m-%Y)
+date: $(_cdate)
 ---
 
-[[daily/$(date -v-1d +%d-%m-%Y)|yesterday]]
-[[daily/$(date -v+1d +%d-%m-%Y)|tomorrow]]
+[[daily/$(_cdate 'yesterday')|yesterday]]
+[[daily/$(_cdate 'tomorrow')|tomorrow]]
 
 ## Todos
 
@@ -90,7 +113,7 @@ $($obshcli reminder)
 
 $($obshcli tag waiting)
 
-$(cat "./daily/$(date -v -1d '+%d-%m-%Y').md" \
+$(cat "./daily/$(_cdate 'yesterday').md" \
 	| rg --multiline --multiline-dotall '# Inbox.*(^#)' \
   | sed 's/##? Inbox//')
 "
