@@ -25,7 +25,7 @@ if [[ "${CMD}" == "tag" ]]; then
   TAG="#${1?"${USAGE}"}"
 
   # Grep all files in current dir but ignoring hidden files/dirs
-  grep -r --exclude="*/\.*" "${TAG}" . | sed "s/${TAG}//" | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  grep -r --exclude="*/\.*" "${TAG}" . | sed "s/${TAG}//" | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
@@ -55,16 +55,19 @@ tomorrow="$(_date -d 'tomorrow' +%d-%m-%Y)"
 # This is the reminder format #reminder:DD-MM-YYYY
 if [[ "${CMD}" == "reminder" ]]; then
   shift
-  DATE=${1-"$(date +%d-%m-%Y)"}
-  echo "Reminders for ${DATE}"
-  grep -r --exclude="*/\.*" "#reminder:${DATE}" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  DATE=${1-"$(_date +%d-%m-%Y)"}
+  DAYOFWEEK=$(_date +%A | tr '[:upper:]' '[:lower:]')
+
+  echo "Reminders for ${DATE} - ${DAYOFWEEK}"
+
+  grep -r --exclude="*/\.*" -E "#reminder:$DATE|#reminder:$DAYOFWEEK" . | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
 if [[ "${CMD}" == "reminders" ]]; then
   shift
   printf "All reminders \n\n"
-  grep -r --exclude="*/\.*" "#reminder" . | sed -E "s/^\.\/(.*\.md):(.*)$/-\2 \n  \[ref](\1\) \n/"
+  grep -r --exclude="*/\.*" "#reminder" . | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
