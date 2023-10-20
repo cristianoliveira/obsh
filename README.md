@@ -1,6 +1,26 @@
 # obsh
+
 [Ob][sh]idian a shell CLI for querying data from obsidian vaults. 
 Useful for automation and composing [obsidian vim snippets](https://github.com/cristianoliveira/dotfiles/blob/main/nvim/mysnippets/markdown.snippets)
+
+## How do I use it?
+
+Assuming you use the feature Daily Notes of Obsidian, you can use obsh to generate 
+a template of the daily notes. It creates a link between current note,
+the yesterday's note and tomorrow's note.
+
+During the day add notes on the section `## Inbox` of your daily note there goes
+all the random thoughts you have during the day and items you need to accomplish.
+
+For instance:
+
+ - Mark lines as items #todo for things you need to remember on your daily note
+ - Mark lines with #assumption for things you have to check later to validate your assumptions
+ - Mark lines with #reminder:{date} for things you need to remember on a specific date.
+ - Mark lines with #reminder:{dayoftheweek} for things you need to remember on a specific day of the week (recurrent)
+ - Mark lines with #waiting for things you are waiting for someone or something.
+
+Then run `obsh daily` to generate a daily note with all the items you marked.
 
 ## Usage
 
