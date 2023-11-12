@@ -25,3 +25,14 @@ obsh daily                       - Generate a daily note template
 Options:
   -h, --help    Show this screen.
 ```
+
+## Install
+
+```sh
+git clone https://github.com/cristianoliveira/obsh.git $HOME/.obsh
+
+mkdir -p $HOME/bin
+ln -s $HOME/.obsh/obsh $HOME/bin
+
+export PATH="$HOME/bin:$PATH"
+```
