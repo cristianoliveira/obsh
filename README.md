@@ -1,6 +1,6 @@
 # obsh
 [Ob][sh]idian a shell CLI for querying data from obsidian vaults. 
-Useful for automation and composing snippets. See [obsidian vim snippets](https://github.com/cristianoliveira/dotfiles/blob/main/nvim/mysnippets/markdown.snippets)
+Useful for automation and composing [obsidian vim snippets](https://github.com/cristianoliveira/dotfiles/blob/main/nvim/mysnippets/markdown.snippets)
 
 ## Usage
 
