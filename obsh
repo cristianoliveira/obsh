@@ -8,7 +8,16 @@ Obashidian - Obsidian Shell CLI (obsh)
 Query data from obsidian vault for analysis and automation direct from the command line.
 
 Usage:
-${0} <cmd> <args>
+obsh <cmd> <args>
+obsh tag <tag>                   - Search for a tag in the vault
+obsh reminder [date/dayofweek]   - Search for reminders for a specific date
+obsh reminders                   - Search for all reminders
+obsh block <block>               - Search for a block in the vault
+obsh section <section>           - Search for a section in a file
+obsh daily                       - Generate a daily note template
+
+Options:
+  -h, --help    Show this screen.
 "
 
 obshcli="${0}"
@@ -20,12 +29,20 @@ if [[ ! -d ".obsidian" ]]; then
 fi
 
 CMD=${1?"${USAGE}"}
+
+if [[ "${CMD}" == "-h" || "${CMD}" == "--help" ]]; then
+  echo "${USAGE}"
+  exit 0
+fi
+
 if [[ "${CMD}" == "tag" ]]; then
   shift
   TAG="#${1?"${USAGE}"}"
 
   # Grep all files in current dir but ignoring hidden files/dirs
-  grep -r --exclude="*/\.*" "${TAG}" . | sed "s/${TAG}//" | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
+  grep -r --exclude="*/\.*" "${TAG}" . | \
+    sed -E "s/#/@/" | \
+    sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
@@ -58,16 +75,23 @@ if [[ "${CMD}" == "reminder" ]]; then
   DATE=${1-"$(_date +%d-%m-%Y)"}
   DAYOFWEEK=$(_date +%A | tr '[:upper:]' '[:lower:]')
 
+
+  TAG_TO_GREP="#reminder:$DATE|#reminder:$DAYOFWEEK"
   echo "Reminders for ${DATE} - ${DAYOFWEEK}"
 
-  grep -r --exclude="*/\.*" -E "#reminder:$DATE|#reminder:$DAYOFWEEK" . | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
+  grep -r --exclude="*/\.*" -E "$TAG_TO_GREP" . | \
+    sed -E "s/#/@/" | \
+    sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
 if [[ "${CMD}" == "reminders" ]]; then
   shift
   printf "All reminders \n\n"
-  grep -r --exclude="*/\.*" "#reminder" . | sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
+  TAG_TO_GREP="#reminder"
+  grep -r --exclude="*/\.*" "$TAG_TO_GREP" . | \
+    sed -E "s/#/@/" | \
+    sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
 fi
 
@@ -104,8 +128,7 @@ fi
 
 if [[ "${CMD}" == "daily" ]]; then
   shift
-  echo "
----
+  echo "---
 title: Daily
 date: $(_date +%d-%m-%Y)
 ---
@@ -121,13 +144,13 @@ $($obshcli tag todo)
 
 $($obshcli tag assumption)
 
-## Today reminders
-
-$($obshcli reminder)
-
 ## Waiting
 
 $($obshcli tag waiting)
+
+## Today reminders
+
+$($obshcli reminder)
 
 ## Inbox
 
