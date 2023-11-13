@@ -5,12 +5,13 @@ Useful for automation and composing [obsidian vim snippets](https://github.com/c
 
 ## How do I use it?
 
-Assuming you use the feature Daily Notes of Obsidian, you can use obsh to generate 
-a template of the daily notes. It creates a link between current note,
-the yesterday's note and tomorrow's note.
+Assuming you use Obsidian's Daily Notes feature, you can use `obsh` to generate 
+a template of your daily notes. It creates a link between the current note and
+yesterday's note + tomorrow's note.
 
 During the day add notes on the section `## Inbox` of your daily note there goes
-all the random thoughts you have during the day and items you need to accomplish.
+all the random thoughts you have during the day and items you need to accomplish. 
+I personally like the [Getting Things Done methodology](https://en.wikipedia.org/wiki/Getting_Things_Done).
 
 For instance:
 
