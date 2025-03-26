@@ -40,7 +40,7 @@ if [[ "${CMD}" == "tag" ]]; then
   TAG="#${1?"${USAGE}"}"
 
   # Grep all files in current dir but ignoring hidden files/dirs
-  grep -r --exclude="*/\.*" "${TAG}" . | \
+  grep -r --exclude-dir=".obsidian" --exclude="*/\.*" "${TAG}" . | \
     sed -E "s/#/@/" | \
     sed -E "s/^\.\/(.*\.md):(.*)$/\2 \n  \[ref](\1\) \n/"
   exit 0
