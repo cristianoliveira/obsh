@@ -57,3 +57,9 @@ ln -s $HOME/.obsh/obsh $HOME/bin
 
 export PATH="$HOME/bin:$PATH"
 ```
+
+### With nix
+
+```sh
+nix profile install github:cristianoliveira/obsh
+```
